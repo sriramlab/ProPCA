@@ -1,0 +1,12 @@
+genotype = example.geno
+num_evec = 5
+l = 2
+max_iterations = 20 
+debug = false
+accuracy = true
+convergence_limit = 0.001
+output_path = example_
+accelerated_em = 1
+var_normalize = true
+memory_efficient = false
+fast_mode = false
