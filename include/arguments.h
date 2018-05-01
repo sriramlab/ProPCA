@@ -189,8 +189,8 @@ public:
 void parse_args(int argc, char const *argv[]){
 	
 	// Setting Default Values
-	command_line_opts.max_iterations=20;
 	command_line_opts.num_of_evec=2;
+	command_line_opts.max_iterations=2*command_line_opts.num_of_evec;
 	command_line_opts.getaccuracy=false;
 	command_line_opts.debugmode=false;
 	command_line_opts.OUTPUT_PATH = "";
@@ -215,7 +215,7 @@ void parse_args(int argc, char const *argv[]){
 		std::string cfg_filename = std::string(argv[2]);
 		ConfigFile cfg(cfg_filename);
 		got_genotype_file=cfg.keyExists("genotype");
-		command_line_opts.max_iterations = cfg.getValueOfKey<int>("max_iterations",100);
+		command_line_opts.max_iterations = cfg.getValueOfKey<int>("max_iterations",5);
 		command_line_opts.num_of_evec=cfg.getValueOfKey<int>("num_evec",2);
 		command_line_opts.getaccuracy=cfg.getValueOfKey<bool>("accuracy",false);
 		command_line_opts.debugmode=cfg.getValueOfKey<bool>("debug",false);
@@ -231,74 +231,77 @@ void parse_args(int argc, char const *argv[]){
 		command_line_opts.text_version = cfg.getValueOfKey<bool>("text_version",false);							
 	}
 	else{
+		bool got_max_iter = false;
 		for (int i = 1; i < argc; i++) { 
-		if (i + 1 != argc){
-			if(strcmp(argv[i],"-g")==0){
-				command_line_opts.GENOTYPE_FILE_PATH = string(argv[i+1]);
-				got_genotype_file=true;
-				i++;
-			}
-			else if(strcmp(argv[i],"-o")==0){
-				command_line_opts.OUTPUT_PATH = string(argv[i+1]);
-				i++;
-			}
-			else if(strcmp(argv[i],"-k")==0){
-				command_line_opts.num_of_evec = atoi(argv[i+1]);
-				i++;
-			}
-			else if(strcmp(argv[i],"-m")==0){
-				command_line_opts.max_iterations = atoi(argv[i+1]);
-				i++;
-			}
-			else if(strcmp(argv[i],"-l")==0){
-				command_line_opts.l = atoi(argv[i+1]);
-				i++;
-			}
-			else if(strcmp(argv[i],"-cl")==0){
-				command_line_opts.convergence_limit = atof(argv[i+1]);
-				i++;
-			}
-			else if(strcmp(argv[i],"-aem")==0){
-				command_line_opts.accelerated_em = atof(argv[i+1]);
-				i++;
+			if (i + 1 != argc){
+				if(strcmp(argv[i],"-g")==0){
+					command_line_opts.GENOTYPE_FILE_PATH = string(argv[i+1]);
+					got_genotype_file=true;
+					i++;
+				}
+				else if(strcmp(argv[i],"-o")==0){
+					command_line_opts.OUTPUT_PATH = string(argv[i+1]);
+					i++;
+				}
+				else if(strcmp(argv[i],"-k")==0){
+					command_line_opts.num_of_evec = atoi(argv[i+1]);
+					i++;
+				}
+				else if(strcmp(argv[i],"-m")==0){
+					command_line_opts.max_iterations = atoi(argv[i+1]);
+					got_max_iter = true;
+					i++;
+				}
+				else if(strcmp(argv[i],"-l")==0){
+					command_line_opts.l = atoi(argv[i+1]);
+					i++;
+				}
+				else if(strcmp(argv[i],"-cl")==0){
+					command_line_opts.convergence_limit = atof(argv[i+1]);
+					i++;
+				}
+				else if(strcmp(argv[i],"-aem")==0){
+					command_line_opts.accelerated_em = atof(argv[i+1]);
+					i++;
+				}
+				else if(strcmp(argv[i],"-v")==0)
+					command_line_opts.debugmode=true;
+				else if(strcmp(argv[i],"-vn")==0)
+					command_line_opts.var_normalize=true;
+				else if(strcmp(argv[i],"-a")==0)
+					command_line_opts.getaccuracy=true;
+				else if(strcmp(argv[i],"-mem")==0)
+					command_line_opts.memory_efficient=true;
+				else if(strcmp(argv[i],"-miss")==0)
+					command_line_opts.missing=true;
+				else if(strcmp(argv[i],"-nfm")==0)
+					command_line_opts.fast_mode=false;
+				else if(strcmp(argv[i],"-txt")==0)
+					command_line_opts.text_version=true;
+				
+				else{
+					cout<<"Not Enough or Invalid arguments"<<endl;
+					cout<<"Correct Usage is "<<argv[0]<<" -g <genotype file> -k <num_of_evec> -m <max_iterations> -v (for debugmode) -a (for getting accuracy)"<<endl;
+					exit(-1);
+				}
 			}
 			else if(strcmp(argv[i],"-v")==0)
-				command_line_opts.debugmode=true;
-			else if(strcmp(argv[i],"-vn")==0)
-				command_line_opts.var_normalize=true;
+			command_line_opts.debugmode=true;
 			else if(strcmp(argv[i],"-a")==0)
 				command_line_opts.getaccuracy=true;
+			else if(strcmp(argv[i],"-vn")==0)
+					command_line_opts.var_normalize=true;
 			else if(strcmp(argv[i],"-mem")==0)
-				command_line_opts.memory_efficient=true;
-			else if(strcmp(argv[i],"-miss")==0)
-				command_line_opts.missing=true;
+					command_line_opts.memory_efficient=true;
 			else if(strcmp(argv[i],"-nfm")==0)
-				command_line_opts.fast_mode=false;
+					command_line_opts.fast_mode=false;
+			else if(strcmp(argv[i],"-miss")==0)
+					command_line_opts.missing=true;
 			else if(strcmp(argv[i],"-txt")==0)
-				command_line_opts.text_version=true;
-			
-			else{
-				cout<<"Not Enough or Invalid arguments"<<endl;
-				cout<<"Correct Usage is "<<argv[0]<<" -g <genotype file> -k <num_of_evec> -m <max_iterations> -v (for debugmode) -a (for getting accuracy)"<<endl;
-				exit(-1);
-			}
+					command_line_opts.text_version=true;
 		}
-		else if(strcmp(argv[i],"-v")==0)
-			command_line_opts.debugmode=true;
-		else if(strcmp(argv[i],"-a")==0)
-			command_line_opts.getaccuracy=true;
-		else if(strcmp(argv[i],"-vn")==0)
-				command_line_opts.var_normalize=true;
-		else if(strcmp(argv[i],"-mem")==0)
-				command_line_opts.memory_efficient=true;
-		else if(strcmp(argv[i],"-nfm")==0)
-				command_line_opts.fast_mode=false;
-		else if(strcmp(argv[i],"-miss")==0)
-				command_line_opts.missing=true;
-		else if(strcmp(argv[i],"-txt")==0)
-				command_line_opts.text_version=true;
-			
-		}
+		if(!got_max_iter)
+			command_line_opts.max_iterations = 2*command_line_opts.num_of_evec;
 
 	}
 	
