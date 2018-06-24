@@ -483,6 +483,8 @@ double genotype::get_col_sum(int snpindex){
 
 double genotype::get_col_std(int snpindex){
 	double p_i = get_col_mean(snpindex);
+	if(p_i == 0 || p_i == 2)
+		return 1.0;
 	double temp = sqrt(p_i*(1-(0.5*p_i))) ; 
 	return temp;
 }
