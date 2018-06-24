@@ -439,7 +439,7 @@ void print_vals(){
 	ofstream eval_file;
 	eval_file.open((string(command_line_opts.OUTPUT_PATH)+string("evals.txt")).c_str());
 	for(int kk =0 ; kk < k_orig ; kk++)
-		eval_file << std::setprecision(15)<< (b_svd.singularValues())(kk)<<endl;
+		eval_file << std::setprecision(15)<< (b_svd.singularValues())(kk)*(b_svd.singularValues())(kk)/g.Nsnp<<endl;
 	eval_file.close();
 
 	ofstream proj_file;
