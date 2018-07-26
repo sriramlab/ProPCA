@@ -45,7 +45,7 @@ class genotype {
 		void read_bed_mailman (std::string filename,bool allow_missing )  ;
 		void read_bed_naive (std::string filename ,bool allow_missing)  ;
 
-		int countlines(string filename);
+		int countlines(std::string filename);
 		void set_metadata () ;
 
 
