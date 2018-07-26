@@ -42,12 +42,10 @@ class genotype {
 
 		void read_plink (std::string filenameprefix, bool allow_missing,bool mailman_mode);
 		void read_bed (std::string filename, bool allow_missing, bool mailman_mode )  ;
-		void read_bed_mailman_missing (std::string filename )  ;
-		void read_bed_mailman_nomissing (std::string filename )  ;
+		void read_bed_mailman (std::string filename,bool allow_missing )  ;
 		void read_bed_naive (std::string filename ,bool allow_missing)  ;
-		
-		void read_fam (std::string filename )  ;
-		void read_bim (std::string filename )  ;
+
+		int countlines(string filename);
 		void set_metadata () ;
 
 

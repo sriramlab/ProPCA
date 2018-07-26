@@ -481,7 +481,12 @@ int main(int argc, char const *argv[]){
 	text_version = command_line_opts.text_version;
     fast_mode = command_line_opts.fast_mode;
 	missing = command_line_opts.missing;
-
+    MAX_ITER =  command_line_opts.max_iterations ; 
+	k_orig = command_line_opts.num_of_evec ;
+	debug = command_line_opts.debugmode ;
+	check_accuracy = command_line_opts.getaccuracy;
+	var_normalize = command_line_opts.var_normalize;
+	accelerated_em = command_line_opts.accelerated_em;
 	
 	if(text_version){
 		if(fast_mode)
@@ -507,12 +512,6 @@ int main(int argc, char const *argv[]){
 		exit(-1);
 	}
 
-    MAX_ITER =  command_line_opts.max_iterations ; 
-	k_orig = command_line_opts.num_of_evec ;
-	debug = command_line_opts.debugmode ;
-	check_accuracy = command_line_opts.getaccuracy;
-	var_normalize = command_line_opts.var_normalize;
-	accelerated_em = command_line_opts.accelerated_em;
 	k = k_orig + command_line_opts.l;
 	k = (int)ceil(k/10.0)*10;
 	command_line_opts.l = k - k_orig;
