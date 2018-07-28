@@ -36,6 +36,9 @@ class genotype {
 		
 		void init_means(bool is_missing);
 
+		float get_observed_pj(const std::string &line);
+		float get_observed_pj(const unsigned char* line);
+
 		void read_txt_naive(std::string filename,bool allow_missing);
 		
 		void read_txt_mailman (std::string filename,bool allow_missing);
