@@ -28,7 +28,7 @@ float genotype::get_observed_pj(const std::string &line){
 		}
 	}
 
-	float p_j = observed_sum*1.0/observed_ct;
+	float p_j = observed_sum*0.5/observed_ct;
 	return p_j;
 }
 
@@ -67,7 +67,7 @@ float genotype::get_observed_pj(const unsigned char* line){
 			}
 		}
 	}
-	return observed_sum*1.0/observed_ct;	
+	return observed_sum*0.5/observed_ct;	
 
 }
 
