@@ -21,7 +21,7 @@ make
 Installing FastPPCA is fairly simple. Just issue the following commands on a linux machine
 
 ```
-git clone https://github.com/aman71197/fastPPCA.git
+git clone https://github.com/sriramlab/fastPPCA.git
 cd fastPPCA
 mkdir build
 cd build
