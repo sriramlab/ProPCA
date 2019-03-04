@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(EM_C++)
+project(ProPCA)
 
 include_directories(include/)
 
@@ -15,4 +15,4 @@ IF (NOT DEFINED DEBUG)
 ENDIF()
 ADD_DEFINITIONS(-DDEBUG=${DEBUG})
 
-add_executable(fastppca src/fastppca.cpp src/genotype.cpp src/storage.cpp)
+add_executable(propca src/propca.cpp src/genotype.cpp src/storage.cpp)

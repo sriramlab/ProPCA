@@ -18,17 +18,17 @@ make
 
 ### Installing
 
-Installing FastPPCA is fairly simple. Just issue the following commands on a linux machine
+Installing ProPCA is fairly simple. Just issue the following commands on a linux machine
 
 ```
-git clone https://github.com/sriramlab/fastPPCA.git
-cd fastPPCA
+git clone https://github.com/sriramlab/ProPCA.git
+cd ProPCA
 mkdir build
 cd build
 ```
 By default, the release version is built, if you wish to build the debug version, build with cmake flag `-D DEBUG=1` as shown below.
 
-FastPPCA supports, [SSE](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions) instructions.
+ProPCA supports, [SSE](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions) instructions.
 
 If your architecure is Intel and supports SSE instructions, build with the cmake flag `-D SSE_SUPPORT=1` for an faster improved version as shown below.
 
@@ -47,13 +47,13 @@ make
 
 
 
-## Documentation for fastPPCA
+## Documentation for ProPCA
 
-After compiling the executable fastppca is present in the build directory.
-Running the fastppca is fairly simple and can be done in two different ways
+After compiling the executable propca is present in the build directory.
+Running the propca is fairly simple and can be done in two different ways
 
-* ``./fastppca -p <parameter_file>``
-* ``./fastppca <various_command_line arguments>``
+* ``./propca -p <parameter_file>``
+* ``./propca <various_command_line arguments>``
 
 ### Parameters
 
@@ -83,13 +83,13 @@ An example parameter file is provided in the examples directory.
 You can run the code using the command:
 
 ```
-../build/fastppca -p par.txt
+../build/propca -p par.txt
 ``` 
 
 The equivalent command to issue for running the same code from the examples directory is:
 
 ```
-../build/fastppca -g example.geno -k 5 -l 2 -m 20 -a -cl 0.001 -o example_ -aem 1 -vn -nfm -txt
+../build/propca -g example.geno -k 5 -l 2 -m 20 -a -cl 0.001 -o example_ -aem 1 -vn -nfm -txt
 ```
 
 ### Genotype File
@@ -131,7 +131,7 @@ Make sure to set the text_version to false in the parameter file, or don't use t
 
 * **Aman Agrawal** - [http://www.cse.iitd.ernet.in/~cs1150210/](http://www.cse.iitd.ernet.in/~cs1150210/)
 
-See also the list of [contributors](https://github.com/aman71197/fastPPCA/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/aman71197/ProPCA/graphs/contributors) who participated in this project.
 
 ## License
 
