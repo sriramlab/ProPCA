@@ -402,6 +402,14 @@ MatrixXdr run_EM_missing(MatrixXdr &c_orig){
 		mean = mean * 1.0 / (n-g.not_O_i[i].size());
 		g.update_col_mean(i,mean);
 	}
+
+	// IMPORTANT: Update the value of means variable present locally, so that for next iteration, updated value of means is used.
+	for(int i=0;i<p;i++){
+		means(i,0) = g.get_col_mean(i);
+		// Also updating std, just for consistency, though, it is not used presently.
+		stds(i,0) = g.get_col_std(i);
+	}
+
 	return c_new;
 }
 
