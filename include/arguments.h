@@ -28,16 +28,18 @@ struct options{
 	bool text_version;
 };
 
+/***
+ * Replaced this with C++0x std::is_same fucntion
 template<typename T, typename U>
 struct is_same {
-    static const bool value = false; 
+	static const bool value = false; 
 };
 
 template<typename T>
 struct is_same<T,T> { 
-   static const bool value = true; 
+	static const bool value = true; 
 };
-
+**/
 
 extern options command_line_opts;
 
@@ -63,7 +65,7 @@ public:
 	static T string_to_T(std::string const &val){
 		std::istringstream istr(val);
 		T returnVal;
-		if(is_same<T,bool>::value){
+		if(std::is_same<T,bool>::value){
 			if (!(istr >> std::boolalpha >> returnVal))
 				exitWithError("CFG: Not a valid bool received!\n");
 			return returnVal;
@@ -75,7 +77,7 @@ public:
 		}
 	}
 
-	static std::string string_to_T(std::string const &val){
+	static std::string T_to_string(std::string const &val){
 		return val;
 	}
 };
