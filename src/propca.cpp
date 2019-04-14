@@ -252,7 +252,26 @@ pair<double,double> get_error_norm(MatrixXdr &c){
 	MatrixXdr q_t(k,p);
 	q_t = Q.transpose();
 	MatrixXdr b(k,n);
-	multiply_y_post(q_t,k,b,true);
+	// Need this for subtracting the correct mean in case of missing data
+	if(missing){
+		multiply_y_post(q_t,k,b,false);
+		// Just calculating b from seen data
+		MatrixXdr M_temp(k,1);
+		M_temp = q_t * means;
+		for(int j=0;j<n;j++){
+			MatrixXdr M_to_remove(k,1);
+			M_to_remove = MatrixXdr::Zero(k,1);
+			for(int i=0;i<g.not_O_j[j].size();i++){
+				int idx = g.not_O_j[j][i];
+				M_to_remove = M_to_remove + (Q.row(idx).transpose()*g.get_col_mean(idx));
+			}
+			b.col(j) -= (M_temp - M_to_remove);
+		}
+	}
+	else{
+		multiply_y_post(q_t,k,b,true);		
+	}
+
 	JacobiSVD<MatrixXdr> b_svd(b, ComputeThinU | ComputeThinV);
 	MatrixXdr u_l,d_l,v_l; 
 	if(fast_mode)
@@ -373,6 +392,16 @@ MatrixXdr run_EM_missing(MatrixXdr &c_orig){
 		mu.col(j) = (c_temp-D).inverse() * ( T.col(j) - M_temp + M_to_remove);
 	}
 
+	#if DEBUG==1
+		if(debug){
+			ofstream x_file;
+			x_file.open((string(command_line_opts.OUTPUT_PATH)+string("x_in_fn_vals.txt")).c_str());
+			x_file<<std::setprecision(15)<<mu<<endl;
+			x_file.close();
+		}
+	#endif
+
+
 	// M step
 
 	MatrixXdr mu_temp(k,k);
@@ -429,7 +458,27 @@ void print_vals(){
 	MatrixXdr q_t(k,p);
 	q_t = Q.transpose();
 	MatrixXdr b(k,n);
-	multiply_y_post(q_t,k,b,true);
+
+	// Need this for subtracting the correct mean in case of missing data
+	if(missing){
+		multiply_y_post(q_t,k,b,false);
+		// Just calculating b from seen data
+		MatrixXdr M_temp(k,1);
+		M_temp = q_t * means;
+		for(int j=0;j<n;j++){
+			MatrixXdr M_to_remove(k,1);
+			M_to_remove = MatrixXdr::Zero(k,1);
+			for(int i=0;i<g.not_O_j[j].size();i++){
+				int idx = g.not_O_j[j][i];
+				M_to_remove = M_to_remove + (Q.row(idx).transpose()*g.get_col_mean(idx));
+			}
+			b.col(j) -= (M_temp - M_to_remove);
+		}
+	}
+	else{
+		multiply_y_post(q_t,k,b,true);		
+	}
+	
 	JacobiSVD<MatrixXdr> b_svd(b, ComputeThinU | ComputeThinV);
 	MatrixXdr u_l; 
 	u_l = b_svd.matrixU();
@@ -457,8 +506,13 @@ void print_vals(){
 	if(debug){
 		ofstream c_file;
 		c_file.open((string(command_line_opts.OUTPUT_PATH)+string("cvals.txt")).c_str());
-		c_file<<c<<endl;
+		c_file<<std::setprecision(15)<<c<<endl;
 		c_file.close();
+
+		ofstream means_file;
+		means_file.open((string(command_line_opts.OUTPUT_PATH)+string("means.txt")).c_str());
+		means_file<<std::setprecision(15)<<means<<endl;
+		means_file.close();
 		
 		d_k = MatrixXdr::Zero(k_orig,k_orig);
 		for(int kk =0 ; kk < k_orig ; kk++)
@@ -467,13 +521,13 @@ void print_vals(){
 		x_k = d_k * (v_k.transpose());
 		ofstream x_file;
 		x_file.open((string(command_line_opts.OUTPUT_PATH) + string("xvals.txt")).c_str());
-		x_file<<x_k.transpose()<<endl;
+		x_file<<std::setprecision(15)<<x_k.transpose()<<endl;
 		x_file.close();
 	}
 }
 
 int main(int argc, char const *argv[]){
-
+	
 	clock_t io_begin = clock();
     clock_gettime (CLOCK_REALTIME, &t0);
 
@@ -580,7 +634,7 @@ int main(int argc, char const *argv[]){
 	ofstream c_file;
 	if(debug){
 		c_file.open((string(command_line_opts.OUTPUT_PATH)+string("cvals_orig.txt")).c_str());
-		c_file<<c<<endl;
+		c_file<<std::setprecision(15)<<c<<endl;
 		c_file.close();
 		printf("Read Matrix\n");
 	}
