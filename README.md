@@ -74,7 +74,8 @@ The values in the brackets are the command line flags for running the code witho
 * missing (-miss) : This flag states whether there is any missing data present in the genotype matrix or not. 
 * text_version (-txt) : This flag makes the input genotype file to be in the text format as described below. If not used, plink format will be used. (default: false)
 * memory_efficient (-mem) : The flag states whether to use a memory effecient version for the EM algorithm or not. The memory efficient version is a little slow than the not efficient version (default: false)
-
+* nthreads (-nt): Number of threads to use (default: 1)
+* seed (-seed): Seed to use (default: system time)
 
 ```
 

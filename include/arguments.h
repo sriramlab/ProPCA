@@ -26,6 +26,9 @@ struct options{
 	bool fast_mode;
 	bool missing;
 	bool text_version;
+	int nthreads;
+	int seed;
+	bool given_seed;
 };
 
 /***
@@ -205,6 +208,9 @@ void parse_args(int argc, char const *argv[]){
 	command_line_opts.fast_mode=true;
 	command_line_opts.missing=false;
 	command_line_opts.text_version = false;
+	command_line_opts.nthreads  = 1;
+	command_line_opts.seed  = -1;
+	command_line_opts.given_seed  = false;
 	
 
 	if(argc<3){
@@ -231,6 +237,9 @@ void parse_args(int argc, char const *argv[]){
 		command_line_opts.fast_mode = cfg.getValueOfKey<bool>("fast_mode",true);
 		command_line_opts.missing = cfg.getValueOfKey<bool>("missing",false);	
 		command_line_opts.text_version = cfg.getValueOfKey<bool>("text_version",false);							
+		command_line_opts.nthreads = cfg.getValueOfKey<int>("nthreads", 1);							
+		command_line_opts.seed = cfg.getValueOfKey<int>("seed", -1);							
+		command_line_opts.given_seed = command_line_opts.seed >= 0 ? true: false;							
 	}
 	else{
 		bool got_max_iter = false;
@@ -252,6 +261,15 @@ void parse_args(int argc, char const *argv[]){
 				else if(strcmp(argv[i],"-m")==0){
 					command_line_opts.max_iterations = atoi(argv[i+1]);
 					got_max_iter = true;
+					i++;
+				}
+				else if(strcmp(argv[i],"-nt")==0){
+					command_line_opts.nthreads = atoi(argv[i+1]);
+					i++;
+				}
+				else if(strcmp(argv[i],"-seed")==0){
+					command_line_opts.seed = atoi(argv[i+1]);
+					command_line_opts.given_seed = command_line_opts.seed >= 0 ? true: false;							
 					i++;
 				}
 				else if(strcmp(argv[i],"-l")==0){
