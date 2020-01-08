@@ -10,6 +10,8 @@
 #include <Eigen/SVD>
 #include <Eigen/QR>
 #include "time.h"
+#include <thread>
+#include <chrono>
 
 #include "genotype.h"
 #include "mailman.h"
@@ -32,13 +34,23 @@ using namespace std;
 typedef Matrix<double, Dynamic, Dynamic, RowMajor> MatrixXdr;
 
 //Intermediate Variables
+//
+// How to batch columns: 
 int blocksize;
-double *partialsums;
+double **partialsums;
 double *sum_op;		
-double *yint_e;
-double *yint_m;
-double **y_e;
-double **y_m;
+
+// Intermediate computations in E-step. 
+// Size = 3^(log_3(n)) * k
+double **yint_e;
+//  n X k
+double ***y_e;
+
+// Intermediate computations in M-step. 
+// Size = nthreads X 3^(log_3(n)) * k
+double **yint_m;
+//  nthreads X log_3(n) X k
+double ***y_m;
 
 
 struct timespec t0;
@@ -69,12 +81,48 @@ bool memory_efficient = false;
 bool missing=false;
 bool fast_mode = true;
 bool text_version = false;
+int nthreads = 1;
 
 
+
+
+void multiply_y_pre_fast_thread (int begin, int end, MatrixXdr &op, int Ncol_op, double *yint_m, double **y_m, double *partialsums, MatrixXdr &res){
+	for(int seg_iter = begin; seg_iter < end; seg_iter++){
+		mailman::fastmultiply ( g.segment_size_hori, g.Nindv, Ncol_op, g.p[seg_iter], op, yint_m, partialsums, y_m);
+		int p_base = seg_iter * g.segment_size_hori; 
+		for(int p_iter=p_base; (p_iter < p_base + g.segment_size_hori) && (p_iter < g.Nsnp) ; p_iter++ ){
+			for(int k_iter = 0; k_iter < Ncol_op; k_iter++) 
+				res(p_iter, k_iter) = y_m [p_iter - p_base][k_iter];
+		}
+	}
+}
+
+void multiply_y_post_fast_thread (int begin, int end, MatrixXdr &op, int Ncol_op, double *yint_e, double **y_e, double *partialsums){
+	for (int i = 0 ; i < g.Nindv ; i++) {
+		memset (y_e[i], 0, blocksize * sizeof(double));
+	}
+
+	for(int seg_iter = begin; seg_iter < end; seg_iter++){
+		mailman::fastmultiply_pre (g.segment_size_hori, g.Nindv, Ncol_op, seg_iter * g.segment_size_hori, g.p[seg_iter], op, yint_e, partialsums, y_e);
+	}
+}
+
+
+/*
+ * M-step: Compute C = Y E 
+ * Y : p X n genotype matrix
+ * E : n K k matrix: X^{T} (XX^{T})^{-1}
+ * C = p X k matrix
+ *
+ * op : E
+ * Ncol_op : k
+ * res : C
+ * subtract_means :
+ */
 void multiply_y_pre_fast(MatrixXdr &op, int Ncol_op ,MatrixXdr &res,bool subtract_means){
 	
-	for(int k_iter=0;k_iter<Ncol_op;k_iter++){
-		sum_op[k_iter]=op.col(k_iter).sum();		
+	for(int k_iter = 0; k_iter < Ncol_op; k_iter++){
+		sum_op[k_iter] = op.col(k_iter).sum();		
 	}
 
 	#if DEBUG==1
@@ -91,21 +139,40 @@ void multiply_y_pre_fast(MatrixXdr &op, int Ncol_op ,MatrixXdr &res,bool subtrac
 
 	//TODO: Memory Effecient SSE FastMultipy
 
-	for(int seg_iter=0;seg_iter<g.Nsegments_hori-1;seg_iter++){
-		mailman::fastmultiply(g.segment_size_hori,g.Nindv,Ncol_op,g.p[seg_iter],op,yint_m,partialsums,y_m);
-		int p_base = seg_iter*g.segment_size_hori; 
-		for(int p_iter=p_base; (p_iter<p_base+g.segment_size_hori) && (p_iter<g.Nsnp) ; p_iter++ ){
-			for(int k_iter=0;k_iter<Ncol_op;k_iter++) 
-				res(p_iter,k_iter) = y_m[p_iter-p_base][k_iter];
+	nthreads = (nthreads > g.Nsegments_hori) ? g.Nsegments_hori: nthreads;
+
+	std::thread th [nthreads];
+	int perthread = g.Nsegments_hori/nthreads;
+//	cout << g.Nsegments_hori << "\t" << nthreads << "\t" << perthread << endl;
+	int t = 0;
+	for (; t < nthreads - 1; t++) {
+//		cout << "Launching thread " << t << endl;
+		th[t] = std::thread (multiply_y_pre_fast_thread, t * perthread , (t+1)*perthread, std::ref (op), Ncol_op, yint_m[t], y_m[t], partialsums[t], std::ref(res));
+	}
+	
+	th[t] = std::thread (multiply_y_pre_fast_thread, t * perthread , g.Nsegments_hori  - 1, std::ref (op), Ncol_op, yint_m[t], y_m[t], partialsums[t], std::ref(res));
+
+	for (int t = 0 ; t < nthreads; t++) {
+		th[t].join ();
+	}
+	
+/*
+	for(int seg_iter = 0; seg_iter < g.Nsegments_hori - 1; seg_iter++){
+		mailman::fastmultiply ( g.segment_size_hori, g.Nindv, Ncol_op, g.p[seg_iter], op, yint_m, partialsums, y_m);
+		int p_base = seg_iter * g.segment_size_hori; 
+		for(int p_iter=p_base; (p_iter < p_base + g.segment_size_hori) && (p_iter < g.Nsnp) ; p_iter++ ){
+			for(int k_iter = 0; k_iter < Ncol_op; k_iter++) 
+				res(p_iter, k_iter) = y_m [p_iter - p_base][k_iter];
 		}
 	}
+*/
 
-	int last_seg_size = (g.Nsnp%g.segment_size_hori !=0 ) ? g.Nsnp%g.segment_size_hori : g.segment_size_hori;
-	mailman::fastmultiply(last_seg_size,g.Nindv,Ncol_op,g.p[g.Nsegments_hori-1],op,yint_m,partialsums,y_m);		
-	int p_base = (g.Nsegments_hori-1)*g.segment_size_hori;
-	for(int p_iter=p_base; (p_iter<p_base+g.segment_size_hori) && (p_iter<g.Nsnp) ; p_iter++){
-		for(int k_iter=0;k_iter<Ncol_op;k_iter++) 
-			res(p_iter,k_iter) = y_m[p_iter-p_base][k_iter];
+	int last_seg_size = (g.Nsnp % g.segment_size_hori !=0 ) ? g.Nsnp % g.segment_size_hori : g.segment_size_hori;
+	mailman::fastmultiply(last_seg_size, g.Nindv, Ncol_op, g.p[g.Nsegments_hori-1], op, yint_m[0], partialsums[0], y_m[0]);		
+	int p_base = (g.Nsegments_hori - 1) * g.segment_size_hori;
+	for(int p_iter = p_base; (p_iter < p_base + g.segment_size_hori) && (p_iter < g.Nsnp) ; p_iter++){
+		for(int k_iter = 0; k_iter < Ncol_op; k_iter++) 
+			res(p_iter, k_iter) = y_m [0][p_iter - p_base][k_iter];
 	}
 
 	#if DEBUG==1
@@ -119,24 +186,35 @@ void multiply_y_pre_fast(MatrixXdr &op, int Ncol_op ,MatrixXdr &res,bool subtrac
 	if(!subtract_means)
 		return;
 
-	for(int p_iter=0;p_iter<p;p_iter++){
- 		for(int k_iter=0;k_iter<Ncol_op;k_iter++){		 
-			res(p_iter,k_iter) = res(p_iter,k_iter) - (g.get_col_mean(p_iter)*sum_op[k_iter]);
+	for(int p_iter = 0; p_iter < p; p_iter++){
+ 		for(int k_iter = 0 ; k_iter < Ncol_op; k_iter++){		 
+			res(p_iter, k_iter) = res(p_iter, k_iter) - (g.get_col_mean(p_iter)*sum_op[k_iter]);
 			if(var_normalize)
-				res(p_iter,k_iter) = res(p_iter,k_iter)/(g.get_col_std(p_iter));		
+				res(p_iter, k_iter) = res(p_iter, k_iter)/(g.get_col_std(p_iter));		
  		}		
  	}	
 
 }
 
+/*
+ * E-step: Compute X = D Y 
+ * Y : p X n genotype matrix
+ * D : k X p matrix: (C^T C)^{-1} C^{T}
+ * X : k X n matrix
+ *
+ * op_orig : D
+ * Nrows_op : k
+ * res : X
+ * subtract_means :
+ */
 void multiply_y_post_fast(MatrixXdr &op_orig, int Nrows_op, MatrixXdr &res,bool subtract_means){
 
 	MatrixXdr op;
 	op = op_orig.transpose();
 
 	if(var_normalize && subtract_means){
-		for(int p_iter=0;p_iter<p;p_iter++){
-			for(int k_iter=0;k_iter<Nrows_op;k_iter++)		
+		for(int p_iter = 0; p_iter < p ; p_iter++){
+			for(int k_iter = 0; k_iter < Nrows_op; k_iter++)		
 				op(p_iter,k_iter) = op(p_iter,k_iter) / (g.get_col_std(p_iter));		
 		}		
 	}
@@ -150,18 +228,44 @@ void multiply_y_post_fast(MatrixXdr &op_orig, int Nrows_op, MatrixXdr &res,bool 
 	
 	int Ncol_op = Nrows_op;
 
+	nthreads = (nthreads > g.Nsegments_hori) ? g.Nsegments_hori: nthreads;
 
-	int seg_iter;
-	for(seg_iter=0;seg_iter<g.Nsegments_hori-1;seg_iter++){
-		mailman::fastmultiply_pre(g.segment_size_hori,g.Nindv,Ncol_op, seg_iter * g.segment_size_hori, g.p[seg_iter],op,yint_e,partialsums,y_e);
+	std::thread th [nthreads];
+	int perthread = g.Nsegments_hori/nthreads;
+//	cout << "post: " << g.segment_size_hori << "\t" << g.Nsegments_hori << "\t" << nthreads << "\t" << perthread << endl;
+	int t = 0;
+	for (; t < nthreads - 1; t++) {
+//		cout << "Launching " << t << endl;
+		th[t] = std::thread ( multiply_y_post_fast_thread,t * perthread, (t+1)*perthread, std::ref(op), Ncol_op, yint_e[t], y_e[t], partialsums[t]);
+
 	}
-	int last_seg_size = (g.Nsnp%g.segment_size_hori !=0 ) ? g.Nsnp%g.segment_size_hori : g.segment_size_hori;
-	mailman::fastmultiply_pre(last_seg_size,g.Nindv,Ncol_op, seg_iter * g.segment_size_hori, g.p[seg_iter],op,yint_e,partialsums,y_e);
+//	cout << "Launching " << t << endl;
+	th[t] = std::thread ( multiply_y_post_fast_thread, t * perthread, g.Nsegments_hori - 1, std::ref(op), Ncol_op, yint_e[t], y_e[t], partialsums[t]);
+	for (int t = 0 ; t < nthreads; t++) {
+		th[t].join ();
+	}
+//	cout << "Joined "<< endl;
 
-	for(int n_iter=0; n_iter<n; n_iter++)  {
-		for(int k_iter=0;k_iter<Ncol_op;k_iter++) {
-			res(k_iter,n_iter) = y_e[n_iter][k_iter];
-			y_e[n_iter][k_iter] = 0;
+/*
+	int seg_iter;
+	for(seg_iter = 0; seg_iter < g.Nsegments_hori-1; seg_iter++){
+		mailman::fastmultiply_pre (g.segment_size_hori, g.Nindv, Ncol_op, seg_iter * g.segment_size_hori, g.p[seg_iter], op, yint_e, partialsums[0], y_e);
+	}
+*/
+
+	for (int t = 1 ; t < nthreads; t++){
+		for(int n_iter = 0; n_iter < n; n_iter++) 
+			for(int k_iter = 0; k_iter < Ncol_op; k_iter++)
+				y_e [0][n_iter][k_iter] += y_e[t][n_iter][k_iter];
+	}
+
+	int last_seg_size = (g.Nsnp % g.segment_size_hori !=0 ) ? g.Nsnp % g.segment_size_hori : g.segment_size_hori;
+	mailman::fastmultiply_pre(last_seg_size, g.Nindv, Ncol_op, (g.Nsegments_hori-1) * g.segment_size_hori, g.p[g.Nsegments_hori-1], op, yint_e[0], partialsums[0], y_e[0]);
+
+	for(int n_iter = 0; n_iter < n; n_iter++)  {
+		for(int k_iter = 0; k_iter < Ncol_op; k_iter++) {
+			res(k_iter,n_iter) = y_e[0][n_iter][k_iter];
+			y_e[0][n_iter][k_iter] = 0;
 		}
 	}
 	
@@ -189,7 +293,6 @@ void multiply_y_post_fast(MatrixXdr &op_orig, int Nrows_op, MatrixXdr &res,bool 
  		for(int n_iter=0;n_iter<n;n_iter++)		
  			res(k_iter,n_iter) = res(k_iter,n_iter) - sums_elements[k_iter];		
  	}
-
 
 }
 
@@ -319,6 +422,11 @@ pair<double,double> get_error_norm(MatrixXdr &c){
     }
 }
 
+
+/* Run one iteration of EM when genotypes are not missing
+ * c_orig : p X k matrix
+ * Output: c_new : p X k matrix 
+ */
 MatrixXdr run_EM_not_missing(MatrixXdr &c_orig){
 	
 	#if DEBUG==1
@@ -328,6 +436,7 @@ MatrixXdr run_EM_not_missing(MatrixXdr &c_orig){
 		}
 	#endif
 
+ 	// c_temp : k X p matrix: (C^T C)^{-1} C^{T}
 	MatrixXdr c_temp(k,p);
 	MatrixXdr c_new(p,k);
 	c_temp = ( (c_orig.transpose()*c_orig).inverse() ) * (c_orig.transpose());
@@ -338,6 +447,13 @@ MatrixXdr run_EM_not_missing(MatrixXdr &c_orig){
 		}
 	#endif
 	
+ 	/* E-step: Compute X = D Y 
+ 	* Y : p X n genotype matrix
+ 	* D : k X p matrix: (C^T C)^{-1} C^{T}
+ 	* X : k X n matrix
+ 	*  x_fn: X
+ 	*  c_temp: D 
+ 	*/
 	MatrixXdr x_fn(k,n);
 	multiply_y_post(c_temp,k,x_fn,true);
 	
@@ -347,8 +463,17 @@ MatrixXdr run_EM_not_missing(MatrixXdr &c_orig){
 		}
 	#endif
 	
+	// x_temp : n X k matrix X^{T} (XX^{T})^{-1}
 	MatrixXdr x_temp(n,k);
 	x_temp = (x_fn.transpose()) * ((x_fn*(x_fn.transpose())).inverse());
+
+	/* M-step: C = Y E
+ 	* Y : p X n genotype matrix
+ 	* E : n K k matrix: X^{T} (XX^{T})^{-1}
+ 	* C = p X k matrix
+ 	* c_new : C 
+ 	* x_temp : E 
+ 	*/
 	multiply_y_pre(x_temp,k,c_new,true);
 	
 	#if DEBUG==1
@@ -528,6 +653,8 @@ void print_vals(){
 
 int main(int argc, char const *argv[]){
 	
+	auto start = std::chrono::system_clock::now();
+
 	clock_t io_begin = clock();
     clock_gettime (CLOCK_REALTIME, &t0);
 
@@ -549,6 +676,7 @@ int main(int argc, char const *argv[]){
 	check_accuracy = command_line_opts.getaccuracy;
 	var_normalize = command_line_opts.var_normalize;
 	accelerated_em = command_line_opts.accelerated_em;
+	nthreads = command_line_opts.nthreads;
 	
 	if(text_version){
 		if(fast_mode)
@@ -583,7 +711,12 @@ int main(int argc, char const *argv[]){
 	bool toStop=false;
 	if(convergence_limit!=-1)
 		toStop=true;
-	srand((unsigned int) time(0));
+
+	if (command_line_opts.given_seed)
+		srand(command_line_opts.seed);
+	else		
+		srand((unsigned int) time(0));
+
 	c.resize(p,k);
 	x.resize(k,n);
 	v.resize(p,k);
@@ -602,28 +735,47 @@ int main(int argc, char const *argv[]){
 
 
 	// Initial intermediate data structures
+	// Operate in blocks to improve caching
+	//
 	blocksize = k;
 	int hsegsize = g.segment_size_hori; 	// = log_3(n)
 	int hsize = pow(3,hsegsize);		 
 	int vsegsize = g.segment_size_ver; 		// = log_3(p)
 	int vsize = pow(3,vsegsize);		 
 
-	partialsums = new double [blocksize];
-	sum_op = new double[blocksize];
-	yint_e = new double [hsize*blocksize];
-	yint_m = new double [hsize*blocksize];
-	memset (yint_m, 0, hsize*blocksize * sizeof(double));
-	memset (yint_e, 0, hsize*blocksize * sizeof(double));
 
-	y_e  = new double*[g.Nindv];
-	for (int i = 0 ; i < g.Nindv ; i++) {
-		y_e[i] = new double[blocksize];
-		memset (y_e[i], 0, blocksize * sizeof(double));
+	partialsums = new double* [nthreads];
+	yint_m = new double* [nthreads];
+	for (int t = 0 ; t < nthreads ; t++) { 
+		partialsums[t] = new double [blocksize];
+		yint_m[t] = new double [hsize*blocksize];
+		memset (yint_m[t], 0, hsize*blocksize * sizeof(double));
 	}
 
-	y_m = new double*[hsegsize];
-	for (int i = 0 ; i < hsegsize ; i++)
-		y_m[i] = new double[blocksize];
+	sum_op = new double[blocksize];
+
+	yint_e = new double* [nthreads];
+	for (int t = 0 ; t < nthreads ; t++) { 
+		yint_e[t] = new double [hsize*blocksize];
+		memset (yint_e[t], 0, hsize*blocksize * sizeof(double));
+	}
+
+	y_e  = new double**[nthreads];
+	for (int t = 0 ; t < nthreads ; t++) {
+		y_e[t]  = new double*[g.Nindv];
+		for (int i = 0 ; i < g.Nindv ; i++) {
+			y_e[t][i] = new double[blocksize];
+			memset (y_e[t][i], 0, blocksize * sizeof(double));
+		}
+	}
+
+	y_m = new double**[nthreads];
+	for (int t = 0 ; t < nthreads; t++){
+		y_m[t] = new double*[hsegsize];
+		for (int i = 0 ; i < hsegsize ; i++)
+			y_m[t][i] = new double[blocksize];
+
+	}
 
 	for(int i=0;i<p;i++){
 		means(i,0) = g.get_col_mean(i);
@@ -730,17 +882,36 @@ int main(int argc, char const *argv[]){
 	double total_time = double(total_end - total_begin) / CLOCKS_PER_SEC;
 	cout<<"IO Time:  "<< io_time << "\nAVG Iteration Time:  "<<avg_it_time<<"\nTotal runtime:   "<<total_time<<endl;
 
-	delete[] sum_op;
-	delete[] partialsums;
-	delete[] yint_e; 
-	delete[] yint_m;
+	std::chrono::duration<double> wctduration = std::chrono::system_clock::now() - start;
+	cout <<"Wall clock time = " <<  wctduration.count() << endl;
 
-	for (int i  = 0 ; i < hsegsize; i++)
-		delete[] y_m [i]; 
+
+
+	delete[] sum_op;
+	for (int t = 0 ; t < nthreads ; t++){
+		delete[] yint_e[t];
+	}	
+	delete[] yint_e;
+
+	for (int t = 0 ; t < nthreads ; t++){
+		delete[] yint_m[t];
+		delete[] partialsums[t];
+	}
+	delete[] yint_m;
+	delete[] partialsums;
+
+	for (int t = 0 ; t < nthreads ; t++){
+		for (int i  = 0 ; i < hsegsize; i++)
+			delete[] y_m [t][i];
+		delete[] y_m[t];
+	} 
 	delete[] y_m;
 
-	for (int i  = 0 ; i < g.Nindv; i++)
-		delete[] y_e[i]; 
+	for (int t = 0 ; t < nthreads ; t++){
+		for (int i  = 0 ; i < g.Nindv; i++)
+			delete[] y_e[t][i]; 
+		delete[] y_e[t];
+	}
 	delete[] y_e;
 
 	return 0;

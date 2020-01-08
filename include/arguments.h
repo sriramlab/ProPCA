@@ -26,6 +26,9 @@ struct options{
 	bool fast_mode;
 	bool missing;
 	bool text_version;
+	int nthreads;
+	int seed;
+	bool given_seed;
 };
 
 /***
@@ -192,19 +195,22 @@ void parse_args(int argc, char const *argv[]){
 	
 	// Setting Default Values
 	command_line_opts.num_of_evec=5;
-	command_line_opts.max_iterations=2*command_line_opts.num_of_evec;
+	command_line_opts.max_iterations=2+command_line_opts.num_of_evec;
 	command_line_opts.getaccuracy=false;
 	command_line_opts.debugmode=false;
 	command_line_opts.OUTPUT_PATH = "fastppca_";
 	bool got_genotype_file=false;
 	command_line_opts.var_normalize=false;
-	command_line_opts.l=5;
+	command_line_opts.l=command_line_opts.num_of_evec;
 	command_line_opts.accelerated_em=0;
 	command_line_opts.convergence_limit= -1.0;
 	command_line_opts.memory_efficient=false;
 	command_line_opts.fast_mode=true;
 	command_line_opts.missing=false;
 	command_line_opts.text_version = false;
+	command_line_opts.nthreads  = 1;
+	command_line_opts.seed  = -1;
+	command_line_opts.given_seed  = false;
 	
 
 	if(argc<3){
@@ -218,10 +224,10 @@ void parse_args(int argc, char const *argv[]){
 		ConfigFile cfg(cfg_filename);
 		got_genotype_file=cfg.keyExists("genotype");
 		command_line_opts.num_of_evec=cfg.getValueOfKey<int>("num_evec",5);
-		command_line_opts.max_iterations = cfg.getValueOfKey<int>("max_iterations",2*command_line_opts.num_of_evec);
+		command_line_opts.max_iterations = cfg.getValueOfKey<int>("max_iterations",2+command_line_opts.num_of_evec);
 		command_line_opts.getaccuracy=cfg.getValueOfKey<bool>("accuracy",false);
 		command_line_opts.debugmode=cfg.getValueOfKey<bool>("debug",false);
-		command_line_opts.l=cfg.getValueOfKey<int>("l",5);
+		command_line_opts.l=cfg.getValueOfKey<int>("l",command_line_opts.num_of_evec);
 		command_line_opts.OUTPUT_PATH = cfg.getValueOfKey<string>("output_path",string("fastppca_"));
 		command_line_opts.GENOTYPE_FILE_PATH = cfg.getValueOfKey<string>("genotype",string(""));
 		command_line_opts.convergence_limit =cfg.getValueOfKey<double>("convergence_limit",-1.0);
@@ -231,6 +237,9 @@ void parse_args(int argc, char const *argv[]){
 		command_line_opts.fast_mode = cfg.getValueOfKey<bool>("fast_mode",true);
 		command_line_opts.missing = cfg.getValueOfKey<bool>("missing",false);	
 		command_line_opts.text_version = cfg.getValueOfKey<bool>("text_version",false);							
+		command_line_opts.nthreads = cfg.getValueOfKey<int>("nthreads", 1);							
+		command_line_opts.seed = cfg.getValueOfKey<int>("seed", -1);							
+		command_line_opts.given_seed = command_line_opts.seed >= 0 ? true: false;							
 	}
 	else{
 		bool got_max_iter = false;
@@ -252,6 +261,15 @@ void parse_args(int argc, char const *argv[]){
 				else if(strcmp(argv[i],"-m")==0){
 					command_line_opts.max_iterations = atoi(argv[i+1]);
 					got_max_iter = true;
+					i++;
+				}
+				else if(strcmp(argv[i],"-nt")==0){
+					command_line_opts.nthreads = atoi(argv[i+1]);
+					i++;
+				}
+				else if(strcmp(argv[i],"-seed")==0){
+					command_line_opts.seed = atoi(argv[i+1]);
+					command_line_opts.given_seed = command_line_opts.seed >= 0 ? true: false;							
 					i++;
 				}
 				else if(strcmp(argv[i],"-l")==0){
@@ -303,7 +321,7 @@ void parse_args(int argc, char const *argv[]){
 					command_line_opts.text_version=true;
 		}
 		if(!got_max_iter)
-			command_line_opts.max_iterations = 2*command_line_opts.num_of_evec;
+			command_line_opts.max_iterations = 2+command_line_opts.num_of_evec;
 
 	}
 	

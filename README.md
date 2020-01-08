@@ -61,9 +61,9 @@ The values in the brackets are the command line flags for running the code witho
 
 ```
 * genotype (-g) : The path of the genotype file or plink bed file prefix
-* num_evec (-k) : The number of eigen vectors to output (default: 2)
-* l (-l) : The extra calculation to be performed so that k_effective  = k + l (default: 2)
-* max_iterations (-m) : The maximum number of iterations to run the EM for (default: 20)
+* num_evec (-k) : The number of eigen vectors to output (default: 5)
+* l (-l) : The extra calculation to be performed so that k_effective  = k + l (default: num_evec)
+* max_iterations (-m) : The maximum number of iterations to run the EM for (default: num_evec + 2)
 * debug (-v) : Enabling debug mode to output various debug informations (default: false). Need to build with DEBUG=1 as described above for this flag to work.
 * accuracy (-a) : Output the likelihood computation as a function of iterations (default: false)
 * convergence_limit (-cl) : The value of the threshold telling the algorithm that it has converged (default: -1, meaning no auto termination condition )
@@ -74,7 +74,8 @@ The values in the brackets are the command line flags for running the code witho
 * missing (-miss) : This flag states whether there is any missing data present in the genotype matrix or not. 
 * text_version (-txt) : This flag makes the input genotype file to be in the text format as described below. If not used, plink format will be used. (default: false)
 * memory_efficient (-mem) : The flag states whether to use a memory effecient version for the EM algorithm or not. The memory efficient version is a little slow than the not efficient version (default: false)
-
+* nthreads (-nt): Number of threads to use (default: 1)
+* seed (-seed): Seed to use (default: system time)
 
 ```
 
