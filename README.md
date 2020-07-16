@@ -6,6 +6,14 @@ We propose a scalable and exact algorithm to compute principal components on gen
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
+## Citation
+
+Please cite our manuscript if you use our software.
+
+```
+Agrawal A, Chiu AM, Le M, Halperin E, Sankararaman S (2020) Scalable probabilistic PCA for large-scale genetic variation data. PLOS Genetics 16(5): e1008773. https://doi.org/10.1371/journal.pgen.1008773
+```
+
 ### Prerequisites
 
 The following packages are required on a linux machine to compile and use the software package.
@@ -93,6 +101,8 @@ The equivalent command to issue for running the same code from the examples dire
 ../build/propca -g example.geno -k 5 -l 2 -m 20 -a -cl 0.001 -o example_ -aem 1 -vn -nfm -txt
 ```
 
+ProPCA wil generate three files containing the eigenvectors/principal components, projections, and eigenvalues.
+
 ### Genotype File
 
 There are two ways to provide input:
@@ -122,8 +132,6 @@ Make sure to set the text_version to false in the parameter file, or don't use t
 5. Initialize C with gaussian distribution.
 6. Memory Effecient SSE Multiply
 
-
-
 ## Built With
 
 * [Eigen](http://eigen.tuxfamily.org/) - The Linear algebra library for C++
@@ -131,6 +139,7 @@ Make sure to set the text_version to false in the parameter file, or don't use t
 ## Authors
 
 * **Aman Agrawal** - [http://www.cse.iitd.ernet.in/~cs1150210/](http://www.cse.iitd.ernet.in/~cs1150210/)
+* **Alec Chiu** - [alecmchiu.github.io](alecmchiu.github.io)
 
 See also the list of [contributors](https://github.com/aman71197/ProPCA/graphs/contributors) who participated in this project.
 
