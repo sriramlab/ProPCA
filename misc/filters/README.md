@@ -1,0 +1,1 @@
+This folder contains the ultimate lists of SNPs used in our analyses. The file "1kg.bim" contains the SNPs used for analyses involving the data from the 1000 Genomes Project while "ukb.bim" contains the SNPs used in our UK Biobank analysis. 
