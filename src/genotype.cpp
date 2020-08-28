@@ -161,10 +161,13 @@ void genotype::read_txt_mailman (std::string filename,bool allow_missing){
 	std::string line;
 	std::getline(ifs, line);
     std::istringstream iss(line);
-    if (!(iss >> Nsnp >> Nindv)) { 
-		cout<<"ERROR: Header with number of SNPs and individuals not present"<<endl; 
+
+    iss >> Nsnp >> Nindv;
+    if ((Nsnp < 3) || (Nindv < 3)) { 
+		cout << "ERROR: Header with number of SNPs and individuals not present" << endl; 
 		exit(-1);
 	}
+
 	segment_size_hori = ceil(log(Nindv)/log(3));
 	segment_size_ver = ceil(log(Nsnp)/log(3));
 	Nsegments_hori = ceil(Nsnp*1.0/(segment_size_hori*1.0));
@@ -184,7 +187,7 @@ void genotype::read_txt_mailman (std::string filename,bool allow_missing){
 		
 		int horiz_seg_no = i/segment_size_hori ;
 		int sum=0;
-		for(int j=0;j<line.size();j++){
+		for(int j=0; j<line.size(); j+=2){
 			int val = int(line[j]-'0');
 
 			if(val==9){
