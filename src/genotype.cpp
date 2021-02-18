@@ -10,12 +10,11 @@ void genotype::init_means(bool is_missing){
 	for(int i=0;i<Nsnp;i++){
 		double sum = columnsum[i];
 		if(is_missing)
-			columnmeans[i] = sum*1.0/(Nindv-not_O_i[i].size());
+			columnmeans[i] = sum*1.0/(Nindv-(int)not_O_i[i].size());
 		else
 			columnmeans[i] = sum*1.0/Nindv;
 	}
 }
-
 
 float genotype::get_observed_pj(const std::string &line){
 	int observed_sum=0;
@@ -97,6 +96,7 @@ void genotype::read_txt_naive (std::string filename,bool allow_missing){
 		cout<<"ERROR: Header with number of SNPs and individuals not present"<<endl; 
 		exit(-1);
 	}
+
 	
 	if(allow_missing){
 		not_O_i.resize(Nsnp);
@@ -187,18 +187,19 @@ void genotype::read_txt_mailman (std::string filename,bool allow_missing){
 		for(int j=0;j<line.size();j++){
 			int val = int(line[j]-'0');
 
-			if(val==9 && !allow_missing){
-				val=simulate_geno_from_random(p_j);
-			}	
+			if(val==9){
+				if(allow_missing){
+					not_O_i[i].push_back(j);
+					not_O_j[j].push_back(i);
+					val=0;
+				}
+				else
+					val=simulate_geno_from_random(p_j);
+			}
 
 			if(val==0 || val==1 || val==2){
 				sum+=val;
 				p[horiz_seg_no][j] = (3 * p[horiz_seg_no][j]) + val ;
-			}	
-			else if(val==9 && allow_missing){
-				p[horiz_seg_no][j] = 3 * p[horiz_seg_no][j] ;
-				not_O_i[i].push_back(j);
-				not_O_j[j].push_back(i);
 			}
 			else{
 				cout<<"ERROR: Invalid character in genotype file"<<endl;

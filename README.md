@@ -6,6 +6,14 @@ We propose a scalable and exact algorithm to compute principal components on gen
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
+## Citation
+
+Please cite our manuscript if you use our software.
+
+```
+Agrawal A, Chiu AM, Le M, Halperin E, Sankararaman S (2020) Scalable probabilistic PCA for large-scale genetic variation data. PLOS Genetics 16(5): e1008773. https://doi.org/10.1371/journal.pgen.1008773
+```
+
 ### Prerequisites
 
 The following packages are required on a linux machine to compile and use the software package.
@@ -18,17 +26,17 @@ make
 
 ### Installing
 
-Installing FastPPCA is fairly simple. Just issue the following commands on a linux machine
+Installing ProPCA is fairly simple. Just issue the following commands on a linux machine
 
 ```
-git clone https://github.com/aman71197/fastPPCA.git
-cd fastPPCA
+git clone https://github.com/sriramlab/ProPCA.git
+cd ProPCA
 mkdir build
 cd build
 ```
 By default, the release version is built, if you wish to build the debug version, build with cmake flag `-D DEBUG=1` as shown below.
 
-FastPPCA supports, [SSE](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions) instructions.
+ProPCA supports, [SSE](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions) instructions.
 
 If your architecure is Intel and supports SSE instructions, build with the cmake flag `-D SSE_SUPPORT=1` for an faster improved version as shown below.
 
@@ -47,13 +55,13 @@ make
 
 
 
-## Documentation for fastPPCA
+## Documentation for ProPCA
 
-After compiling the executable fastppca is present in the build directory.
-Running the fastppca is fairly simple and can be done in two different ways
+After compiling the executable propca is present in the build directory.
+Running the propca is fairly simple and can be done in two different ways
 
-* ``./fastppca -p <parameter_file>``
-* ``./fastppca <various_command_line arguments>``
+* ``./propca -p <parameter_file>``
+* ``./propca <various_command_line arguments>``
 
 ### Parameters
 
@@ -61,9 +69,9 @@ The values in the brackets are the command line flags for running the code witho
 
 ```
 * genotype (-g) : The path of the genotype file or plink bed file prefix
-* num_evec (-k) : The number of eigen vectors to output (default: 2)
-* l (-l) : The extra calculation to be performed so that k_effective  = k + l (default: 2)
-* max_iterations (-m) : The maximum number of iterations to run the EM for (default: 20)
+* num_evec (-k) : The number of eigen vectors to output (default: 5)
+* l (-l) : The extra calculation to be performed so that k_effective  = k + l (default: num_evec)
+* max_iterations (-m) : The maximum number of iterations to run the EM for (default: num_evec + 2)
 * debug (-v) : Enabling debug mode to output various debug informations (default: false). Need to build with DEBUG=1 as described above for this flag to work.
 * accuracy (-a) : Output the likelihood computation as a function of iterations (default: false)
 * convergence_limit (-cl) : The value of the threshold telling the algorithm that it has converged (default: -1, meaning no auto termination condition )
@@ -74,7 +82,8 @@ The values in the brackets are the command line flags for running the code witho
 * missing (-miss) : This flag states whether there is any missing data present in the genotype matrix or not. 
 * text_version (-txt) : This flag makes the input genotype file to be in the text format as described below. If not used, plink format will be used. (default: false)
 * memory_efficient (-mem) : The flag states whether to use a memory effecient version for the EM algorithm or not. The memory efficient version is a little slow than the not efficient version (default: false)
-
+* nthreads (-nt): Number of threads to use (default: 1)
+* seed (-seed): Seed to use (default: system time)
 
 ```
 
@@ -83,14 +92,16 @@ An example parameter file is provided in the examples directory.
 You can run the code using the command:
 
 ```
-../build/fastppca -p par.txt
+../build/propca -p par.txt
 ``` 
 
 The equivalent command to issue for running the same code from the examples directory is:
 
 ```
-../build/fastppca -g example.geno -k 5 -l 2 -m 20 -a -cl 0.001 -o example_ -aem 1 -vn -nfm -txt
+../build/propca -g example.geno -k 5 -l 2 -m 20 -a -cl 0.001 -o example_ -aem 1 -vn -nfm -txt
 ```
+
+ProPCA wil generate three files containing the eigenvectors/principal components, projections, and eigenvalues.
 
 ### Genotype File
 
@@ -121,8 +132,6 @@ Make sure to set the text_version to false in the parameter file, or don't use t
 5. Initialize C with gaussian distribution.
 6. Memory Effecient SSE Multiply
 
-
-
 ## Built With
 
 * [Eigen](http://eigen.tuxfamily.org/) - The Linear algebra library for C++
@@ -130,8 +139,9 @@ Make sure to set the text_version to false in the parameter file, or don't use t
 ## Authors
 
 * **Aman Agrawal** - [http://www.cse.iitd.ernet.in/~cs1150210/](http://www.cse.iitd.ernet.in/~cs1150210/)
+* **Alec Chiu** - [alecmchiu.github.io](alecmchiu.github.io)
 
-See also the list of [contributors](https://github.com/aman71197/fastPPCA/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/aman71197/ProPCA/graphs/contributors) who participated in this project.
 
 ## License
 

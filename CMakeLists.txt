@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.12)
-project(EM_C++)
+project(ProPCA)
 
 include_directories(include/)
 
-set(CMAKE_CXX_FLAGS "-O3")
+set(CMAKE_CXX_FLAGS "-std=c++0x -O3 -lrt")
 
 IF (NOT DEFINED SSE_SUPPORT)
     SET(SSE_SUPPORT 0)
@@ -15,4 +15,4 @@ IF (NOT DEFINED DEBUG)
 ENDIF()
 ADD_DEFINITIONS(-DDEBUG=${DEBUG})
 
-add_executable(fastppca src/fastppca.cpp src/genotype.cpp src/storage.cpp)
+add_executable(propca src/propca.cpp src/genotype.cpp src/storage.cpp)

@@ -23,9 +23,9 @@ class genotype {
 	 	int nrow, ncol;
 		unsigned char *gtype;
 
-		int Nsnp,Nindv,Nsegments_hori,segment_size_hori,segment_size_ver,Nsegments_ver;
-		int Nbits_hori,Nbits_ver;
-		int Nelements_hori,Nelements_ver;
+		int Nsnp, Nindv, Nsegments_hori, segment_size_hori, segment_size_ver, Nsegments_ver;
+		int Nbits_hori, Nbits_ver;
+		int Nelements_hori, Nelements_ver;
 		std::vector< std::vector<int> > p;
 
 		// std::vector< std::vector<unsigned> > p_eff;

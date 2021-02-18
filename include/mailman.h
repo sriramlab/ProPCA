@@ -13,6 +13,16 @@
 
 namespace mailman {
 
+	/* Compute Y=A*X where A is a m X n matrix represented in mailman form. X is a n X k matrix
+ * m : number of rows
+ * n : number of columns
+ * k : batching factor: how many vectors to operate on 
+ * p : matrix A represented in mailman form
+ * x : matrix X
+ * yint : intermediate computation
+ * c : intermediate computation
+ * y : result
+ 	*/
 	void fastmultiply_normal(int m, int n , int k, std::vector<int> &p, Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &x, double *yint, double *c, double **y){
 		for (int i = 0 ; i < n; i++)  {
 			int l = p[i]  ;
@@ -43,6 +53,21 @@ namespace mailman {
 			yint[l] = 0;
 	}
 
+	/* Compute Y=X*A + Y_0 where A is a m X n matrix represented in mailman form. X is a k X m matrix. Y_0 is a k X n matrix.
+ * X is specified as a matrix k X m_0 matrix X_0 (m_0 > m) 
+ * and a index: start \in {1..m_0 }
+ * so that X = X_0 [start:(start+m-1),]
+ *
+ * m : number of rows
+ * n : number of columns
+ * k : batching factor: how many vectors to operate on 
+ * start: index into X_0
+ * p : matrix A represented in mailman format
+ * x : matrix X_0 
+ * yint : intermediate computation
+ * c : intermediate computation
+ * y : result. also contains Y_0 that is updated.
+ 	*/
 	void fastmultiply_pre_normal(int m, int n , int k, int start, std::vector<int> &p, Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &x, double *yint, double *c, double **y){
 		int size1 = pow(3.,m);
 		memset (yint, 0, size1* sizeof(double));
@@ -71,6 +96,16 @@ namespace mailman {
 	}
 
 
+	/* Compute Y=A*X where A is a m X n matrix represented in mailman form. X is a n X k matrix
+ * m : number of rows
+ * n : number of columns
+ * k : batching factor: how many vectors to operate on 
+ * p : matrix A represented in mailman form
+ * x : matrix X
+ * yint : intermediate computation
+ * c : intermediate computation
+ * y : result
+ 	*/
 	#if SSE_SUPPORT==1
 		// k must be a multiple of 10
 	void fastmultiply_sse (int m, int n , int k, std::vector<int> &p, Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &x, double *yint, double *c, double **y){
@@ -206,8 +241,14 @@ namespace mailman {
 		for (int l = 0; l < k ; l++)
 			yint[l] = 0;
 	}
+
+	
+
+
 	void fastmultiply_pre_sse (int m, int n , int k, int start, std::vector<int> &p, Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &x, double *yint, double *c, double **y){
 		
+//		std::cout << "(" << start << "," << start + m << ")" << std::endl;
+
 		int size1 = pow(3.,m);
 		memset (yint, 0, size1* sizeof(double));
 		__m128d x0, x2, x4, x6, x8;
