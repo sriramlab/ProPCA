@@ -11,6 +11,7 @@
 #include <Eigen/QR>
 #include "time.h"
 #include <thread>
+#include <iomanip>
 #include <chrono>
 
 #include "genotype.h"
