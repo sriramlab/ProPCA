@@ -3,7 +3,7 @@
  (Indian Institute of Technology, Delhi)
 */
 
-#include <bits/stdc++.h>
+// #include <bits/stdc++.h>
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include <Eigen/LU>
@@ -19,12 +19,14 @@
 #include "helper.h"
 #include "storage.h"
 
-#if SSE_SUPPORT==1
-	#define fastmultiply fastmultiply_sse
-	#define fastmultiply_pre fastmultiply_pre_sse
+#ifdef __SSE__
+#define SSE_SUPPORT 1
+#define fastmultiply fastmultiply_sse
+#define fastmultiply_pre fastmultiply_pre_sse
 #else
-	#define fastmultiply fastmultiply_normal
-	#define fastmultiply_pre fastmultiply_pre_normal
+#define SSE_SUPPORT 0
+#define fastmultiply fastmultiply_normal
+#define fastmultiply_pre fastmultiply_pre_normal
 #endif
 
 using namespace Eigen;

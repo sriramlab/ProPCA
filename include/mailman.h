@@ -1,15 +1,14 @@
 #ifndef MAILMAN_H
 #define MAILMAN_H
 
-#include <Eigen/Dense>
-#include <Eigen/Core>
-#include <Eigen/LU>
-#include <Eigen/SVD>
-#include <bits/stdc++.h>
+#include "Eigen/Dense"
+#include "Eigen/Core"
+#include "Eigen/LU"
+#include "Eigen/SVD"
 #include "storage.h"
 #include <assert.h>
 #include <emmintrin.h>
-
+#include <vector>
 
 namespace mailman {
 
@@ -23,7 +22,7 @@ namespace mailman {
  * c : intermediate computation
  * y : result
  	*/
-	void fastmultiply_normal(int m, int n , int k, std::vector<int> &p, Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &x, double *yint, double *c, double **y){
+inline 	void fastmultiply_normal(int m, int n , int k, std::vector<int> &p, Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &x, double *yint, double *c, double **y){
 		for (int i = 0 ; i < n; i++)  {
 			int l = p[i]  ;
 			for (int j = 0 ; j < k ; j ++)
@@ -68,7 +67,7 @@ namespace mailman {
  * c : intermediate computation
  * y : result. also contains Y_0 that is updated.
  	*/
-	void fastmultiply_pre_normal(int m, int n , int k, int start, std::vector<int> &p, Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &x, double *yint, double *c, double **y){
+inline	void fastmultiply_pre_normal(int m, int n , int k, int start, std::vector<int> &p, Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &x, double *yint, double *c, double **y){
 		int size1 = pow(3.,m);
 		memset (yint, 0, size1* sizeof(double));
 
@@ -106,7 +105,7 @@ namespace mailman {
  * c : intermediate computation
  * y : result
  	*/
-	#if SSE_SUPPORT==1
+	#ifdef __SSE__
 		// k must be a multiple of 10
 	void fastmultiply_sse (int m, int n , int k, std::vector<int> &p, Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &x, double *yint, double *c, double **y){
 		__m128d x0, x2, x4, x6, x8;

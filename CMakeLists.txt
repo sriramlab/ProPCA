@@ -1,18 +1,11 @@
-cmake_minimum_required(VERSION 2.8.12)
-project(ProPCA)
+cmake_minimum_required(VERSION 3.15)
+project(ProPCA VERSION 1.0.0 LANGUAGES CXX)
 
-include_directories(include/)
+set(default_build_type "Release")
 
-set(CMAKE_CXX_FLAGS "-std=c++0x -O3 -lrt")
-
-IF (NOT DEFINED SSE_SUPPORT)
-    SET(SSE_SUPPORT 0)
-ENDIF()
-ADD_DEFINITIONS(-DSSE_SUPPORT=${SSE_SUPPORT})
-
-IF (NOT DEFINED DEBUG)
-    SET(DEBUG 0)
-ENDIF()
-ADD_DEFINITIONS(-DDEBUG=${DEBUG})
+set(CMAKE_CXX_STANDARD 11)
+find_package(Threads REQUIRED)
 
 add_executable(propca src/propca.cpp src/genotype.cpp src/storage.cpp)
+target_include_directories(propca PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(propca Threads::Threads)

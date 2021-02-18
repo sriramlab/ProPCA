@@ -1,6 +1,8 @@
-#include <bits/stdc++.h>
+
 #include "genotype.h"
 #include "storage.h"
+#include <fstream>
+#include <string>
 
 using namespace std;
 

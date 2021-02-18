@@ -6,7 +6,7 @@
 #include <sstream>
 #include <map>
 #include <fstream>
-#include <bits/stdc++.h>
+
 
 using namespace std;
 
@@ -47,7 +47,7 @@ struct is_same<T,T> {
 extern options command_line_opts;
 
 
-void exitWithError(const std::string &error) {
+inline void exitWithError(const std::string &error) {
 	std::cout << error;
 	std::cin.ignore();
 	std::cin.get();
@@ -191,7 +191,7 @@ public:
 	}
 };
 
-void parse_args(int argc, char const *argv[]){
+inline void parse_args(int argc, char const *argv[]){
 	
 	// Setting Default Values
 	command_line_opts.num_of_evec=5;
