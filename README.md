@@ -26,32 +26,25 @@ make
 
 ### Installing
 
-Installing ProPCA is fairly simple. Just issue the following commands on a linux machine
+Installing ProPCA is fairly simple. Just issue the following commands on a Unix-alike machine 
 
 ```
 git clone https://github.com/sriramlab/ProPCA.git
 cd ProPCA
-mkdir build
-cd build
+cmake -S . -B build
+cmake --build build
 ```
-By default, the release version is built, if you wish to build the debug version, build with cmake flag `-D DEBUG=1` as shown below.
+By default, the release version is built, if you wish to build the debug version, build with cmake flag `-DCMAKE_BUILD_TYPE=Debug` as shown below.
+
+```
+cmake -S . -B Debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build Debug
+```
 
 ProPCA supports, [SSE](https://en.wikipedia.org/wiki/Streaming_SIMD_Extensions) instructions.
 
-If your architecure is Intel and supports SSE instructions, build with the cmake flag `-D SSE_SUPPORT=1` for an faster improved version as shown below.
+If your architecure is Intel and supports SSE instructions, the C++ compiler will automatically detect this for a faster version of the algorithm.
 
-
-```
-cmake -D SSE_SUPPORT=1 -D DEBUG=1 ..
-make
-```
-
-Else just issue these commands below:
-
-```
-cmake ..
-make
-```
 
 
 
