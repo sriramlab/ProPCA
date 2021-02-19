@@ -235,7 +235,10 @@ void multiply_y_post_fast(MatrixXdr &op_orig, int Nrows_op, MatrixXdr &res,bool 
 
 	std::thread th [nthreads];
 	int perthread = g.Nsegments_hori/nthreads;
-//	cout << "post: " << g.segment_size_hori << "\t" << g.Nsegments_hori << "\t" << nthreads << "\t" << perthread << endl;
+	
+	#if DEBUG
+    // cout << "post: " << g.segment_size_hori << "\t" << g.Nsegments_hori << "\t" << nthreads << "\t" << perthread << endl;
+    #endif
 	int t = 0;
 	for (; t < nthreads - 1; t++) {
 //		cout << "Launching " << t << endl;
