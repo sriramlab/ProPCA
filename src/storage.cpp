@@ -1,5 +1,5 @@
 #include "storage.h"
-#include <bits/stdc++.h>
+#include <vector>
 
 void add_to_arr(int x, int j, int beta,std::vector<unsigned> &arr){
 

@@ -1,7 +1,7 @@
 #ifndef STORAGE_H
 #define STORAGE_H
 
-#include <bits/stdc++.h>
+#include <vector>
 
 void add_to_arr(int x, int j, int beta,std::vector<unsigned> &arr);
 int extract_from_arr(int j,int beta,std::vector<unsigned> &arr);

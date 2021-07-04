@@ -1,6 +1,8 @@
-#include <bits/stdc++.h>
+
 #include "genotype.h"
 #include "storage.h"
+#include <fstream>
+#include <string>
 
 using namespace std;
 
@@ -50,7 +52,7 @@ float genotype::get_observed_pj(const unsigned char* line){
 		}	
 		for ( int l = 0 ; l < lmax; l++){
 			int j = j0 + l ;
-			int ver_seg_no = j/segment_size_ver ;
+			//int ver_seg_no = j/segment_size_ver ;
 			// Extract  PLINK coded genotype and convert into 0/1/2
 			// PLINK coding: 
 			// 00->0
@@ -278,6 +280,8 @@ void genotype::read_bed_mailman (string filename,bool allow_missing)  {
 
    	binary_read(ifs,magic);
 
+	   
+
 	segment_size_hori = floor(log(Nindv)/log(3)) - 2 ;
 	Nsegments_hori = ceil(Nsnp*1.0/(segment_size_hori*1.0));
 	p.resize(Nsegments_hori,std::vector<int>(Nindv));
@@ -315,7 +319,7 @@ void genotype::read_bed_mailman (string filename,bool allow_missing)  {
 			}	
 			for ( int l = 0 ; l < lmax; l++){
 				int j = j0 + l ;
-				int ver_seg_no = j/segment_size_ver ;
+				//int ver_seg_no = j/segment_size_ver ;
 				// Extract  PLINK coded genotype and convert into 0/1/2
 				// PLINK coding: 
 				// 00->0
@@ -514,128 +518,3 @@ void genotype::update_col_mean(int snpindex,double value){
 	columnmeans[snpindex] = value;
 }
 
-
-
-/* Redundant Function
-void genotype::read_genotype_eff (std::string filename,bool allow_missing){
-	FILE* fp;
-	fp= fopen(filename.c_str(),"r");
-	int j=0;
-	int i=0;
-	char ch;
-	// Calculating the sizes and other stuff for genotype matrix
-	int rd = fscanf(fp,"%d %d\n",&Nsnp,&Nindv);
-	segment_size_hori = ceil(log(Nindv)/log(3));
-	segment_size_ver = ceil(log(Nsnp)/log(3));
-	Nsegments_hori = ceil(Nsnp*1.0/(segment_size_hori*1.0));
-	Nsegments_ver = ceil(Nindv*1.0/(segment_size_ver*1.0));
-	Nbits_hori = ceil(log2(pow(3,segment_size_hori)));
-	Nbits_ver = ceil(log2(pow(3,segment_size_ver)));
-	Nelements_hori = floor( (Nindv * Nbits_hori *1.0) / 32) + 1;
-	Nelements_ver = floor( (Nsnp * Nbits_ver*1.0) / 32) + 1;
-	cout<<Nbits_hori<<"  "<<Nbits_ver<<"  "<<Nelements_hori<<"  "<<Nelements_ver<<endl;
-	p_eff.resize(Nsegments_hori,std::vector<unsigned>(Nelements_hori));
-	q_eff.resize(Nsegments_ver,std::vector<unsigned>(Nelements_ver));
-	int sum=0;
-	if(allow_missing){
-		not_O_i.resize(Nsnp);
-		not_O_j.resize(Nindv);	
-	}
-
-    do{
-		int rd = fscanf(fp,"%c",&ch);
-		if(ch=='\n'){
-			i++;
-			columnsum.push_back(sum);
-			sum=0;
-			j=0;
-		}
-		else{
-			int val = int(ch-'0');
-			int horiz_seg_no = i/segment_size_hori ;
-			int ver_seg_no = j/segment_size_ver ;
-			if(val==0){
-				int temp = 3* extract_from_arr(j,Nbits_hori,p_eff[horiz_seg_no]);
-				add_to_arr(temp,j,Nbits_hori,p_eff[horiz_seg_no]);
-				add_to_arr(3*extract_from_arr(i,Nbits_ver,q_eff[ver_seg_no]),i,Nbits_ver,q_eff[ver_seg_no]);
-			}
-			else if(val==1){
-				sum+=1;
-				int temp = 3* extract_from_arr(j,Nbits_hori,p_eff[horiz_seg_no]) + 1;
-				add_to_arr(temp,j,Nbits_hori,p_eff[horiz_seg_no]);
-				add_to_arr(3*extract_from_arr(i,Nbits_ver,q_eff[ver_seg_no]) + 1,i,Nbits_ver,q_eff[ver_seg_no]);
-			}
-			else if(val==2){
-				sum+=2;
-				int temp = 3* extract_from_arr(j,Nbits_hori,p_eff[horiz_seg_no]) + 2;
-				add_to_arr(temp,j,Nbits_hori,p_eff[horiz_seg_no]);
-				add_to_arr(3*extract_from_arr(i,Nbits_ver,q_eff[ver_seg_no]) + 2,i,Nbits_ver,q_eff[ver_seg_no]);
-			}
-			else if(val==9 && allow_missing){
-				int temp = 3* extract_from_arr(j,Nbits_hori,p_eff[horiz_seg_no]);
-				add_to_arr(temp,j,Nbits_hori,p_eff[horiz_seg_no]);
-				add_to_arr(3*extract_from_arr(i,Nbits_ver,q_eff[ver_seg_no]),i,Nbits_ver,q_eff[ver_seg_no]);
-				not_O_i[i].push_back(j);
-				not_O_j[j].push_back(i);				
-			}
-			else{
-				cout<<"Invalid entry in Genotype Matrix"<<endl;
-				cout<<"If there is Missing data, run with -miss flag"<<endl;
-				exit(-1);
-			}
-			j++;
-		}
-	}while(!feof(fp));
-	i--;
-	init_means(allow_missing);	
-}
-
-
-
-void genotype::read_bim (string filename){
-	ifstream inp(filename.c_str());
-	if (!inp.is_open()){
-		cerr << "Error reading file "<< filename <<endl;
-		exit(1);
-	}
-	string line;
-	int j = 0 ;
-	int linenum = 0 ;
-	while(std::getline (inp, line)){
-		linenum ++;
-		char c = line[0];
-		if (c=='#')
-			continue;
-		istringstream ss (line);
-		if (line.empty())
-			continue;
-		j++;
-	}
-	Nsnp = j;
-	inp.close();
-}
-
-void genotype::read_fam (string filename){
-	ifstream inp(filename.c_str());
-	if (!inp.is_open()){
-		cerr << "Error reading file "<< filename <<endl;
-		exit(1);
-	}
-	string line;
-	int j = 0 ;
-	int linenum = 0 ;
-	while(std::getline (inp, line)){
-		linenum ++;
-		char c = line[0];
-		if (c=='#')
-			continue;
-		istringstream ss (line);
-		if (line.empty())
-			continue;
-		j++;
-	}
-	Nindv = j;
-	inp.close();
-}
-
-*/

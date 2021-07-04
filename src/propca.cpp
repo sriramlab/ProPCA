@@ -3,7 +3,7 @@
  (Indian Institute of Technology, Delhi)
 */
 
-#include <bits/stdc++.h>
+// #include <bits/stdc++.h>
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include <Eigen/LU>
@@ -11,6 +11,7 @@
 #include <Eigen/QR>
 #include "time.h"
 #include <thread>
+#include <iomanip>
 #include <chrono>
 
 #include "genotype.h"
@@ -19,12 +20,14 @@
 #include "helper.h"
 #include "storage.h"
 
-#if SSE_SUPPORT==1
-	#define fastmultiply fastmultiply_sse
-	#define fastmultiply_pre fastmultiply_pre_sse
+#ifdef __SSE__
+#define SSE_SUPPORT 1
+#define fastmultiply fastmultiply_sse
+#define fastmultiply_pre fastmultiply_pre_sse
 #else
-	#define fastmultiply fastmultiply_normal
-	#define fastmultiply_pre fastmultiply_pre_normal
+#define SSE_SUPPORT 0
+#define fastmultiply fastmultiply_normal
+#define fastmultiply_pre fastmultiply_pre_normal
 #endif
 
 using namespace Eigen;
@@ -232,7 +235,10 @@ void multiply_y_post_fast(MatrixXdr &op_orig, int Nrows_op, MatrixXdr &res,bool 
 
 	std::thread th [nthreads];
 	int perthread = g.Nsegments_hori/nthreads;
-//	cout << "post: " << g.segment_size_hori << "\t" << g.Nsegments_hori << "\t" << nthreads << "\t" << perthread << endl;
+	
+	#if DEBUG
+    // cout << "post: " << g.segment_size_hori << "\t" << g.Nsegments_hori << "\t" << nthreads << "\t" << perthread << endl;
+    #endif
 	int t = 0;
 	for (; t < nthreads - 1; t++) {
 //		cout << "Launching " << t << endl;

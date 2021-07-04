@@ -9,4 +9,5 @@ output_path = example_
 accelerated_em = 1
 var_normalize = true
 memory_efficient = false
+text_version = true
 fast_mode = false
