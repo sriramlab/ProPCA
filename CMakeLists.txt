@@ -4,6 +4,7 @@ project(ProPCA)
 include_directories(include/)
 
 set(CMAKE_CXX_FLAGS "-std=c++0x -O3 -lrt")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 IF (NOT DEFINED SSE_SUPPORT)
     SET(SSE_SUPPORT 0)
